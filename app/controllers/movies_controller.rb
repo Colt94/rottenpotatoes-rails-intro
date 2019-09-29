@@ -1,5 +1,7 @@
 class MoviesController < ApplicationController
 
+  @@first_use = true
+  
   def movie_params
     params.require(:movie).permit(:title, :rating, :description, :release_date)
   end
@@ -11,23 +13,46 @@ class MoviesController < ApplicationController
   end
 
   def index
-    #@movies = Movie.all
-    #@ratings_used = Movie.movie_ratings()
+    
     @all_ratings = Movie.movie_ratings()
     
     if params[:ratings] != nil
       @movies = Movie.with_ratings(params[:ratings].keys)
-      @ratings_used = params[:ratings].keys
+      session[:ratings] = params[:ratings].keys
+      @ratings_used = session[:ratings]
+      
+      @@first_use = false
     else
-      @movies = Movie.all
-      @ratings_used = Movie.movie_ratings()
+      
+      if @@first_use == true #sets up initial default page
+        session[:ratings] = Movie.movie_ratings()
+        @ratings_used = session[:ratings]
+      else
+        @ratings_used = session[:ratings]
+      end
+      
+      @movies = Movie.with_ratings(@ratings_used)
+      puts @ratings_used
     end
+    
     if params[:sort] == 'title'
-      @movies = Movie.order(:title)
+      @movies = Movie.order(:title).with_ratings(session[:ratings])
+      session[:sort] = params[:sort]
       @title_header = 'hilite'
     elsif params[:sort] == 'release'
-      @movies = Movie.order(:release_date)
+      @movies = Movie.order(:release_date).with_ratings(session[:ratings])
+      session[:sort] = params[:sort]
       @release_date_header = 'hilite'
+    end
+    
+    if session[:sort]
+      if session[:sort] == 'title'
+        @movies = Movie.order(:title).with_ratings(session[:ratings])
+        @title_header = 'hilite'
+      elsif session[:sort] == 'release'
+        @movies = Movie.order(:release_date).with_ratings(session[:ratings])
+        @release_date_header = 'hilite'
+      end
     end
   end
 
