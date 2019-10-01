@@ -16,7 +16,7 @@ class MoviesController < ApplicationController
     
     @all_ratings = Movie.movie_ratings()
     
-    if params[:ratings] != nil
+    if params[:ratings] != nil #if filters are submitted
       @movies = Movie.with_ratings(params[:ratings].keys)
       session[:ratings] = params[:ratings].keys
       @ratings_used = session[:ratings]
@@ -25,6 +25,7 @@ class MoviesController < ApplicationController
     else
       
       if @@first_use == true #sets up initial default page
+        session.delete(:sort)
         session[:ratings] = Movie.movie_ratings()
         @ratings_used = session[:ratings]
       else
@@ -32,7 +33,6 @@ class MoviesController < ApplicationController
       end
       
       @movies = Movie.with_ratings(@ratings_used)
-      puts @ratings_used
     end
     
     if params[:sort] == 'title'
